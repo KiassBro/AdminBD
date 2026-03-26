@@ -99,7 +99,7 @@ class BankApp(tk.Tk):
 
     def __init__(self):
         super().__init__()
-        self.title("🏦  Supervision des Virements Bancaires — PostgreSQL")
+        self.title("Supervision des Virements Bancaires")
         self.geometry(f"{WINDOW_W}x{WINDOW_H}")
         self.configure(bg=BG_ROOT)
         self.minsize(900, 600)
@@ -133,8 +133,8 @@ class BankApp(tk.Tk):
         info.pack(side="left")
         tk.Label(info, text="SUPERVISION DES VIREMENTS BANCAIRES",
                  bg=BG_HEADER, fg=FG_HEADER, font=FONT_TITLE).pack(anchor="w")
-        tk.Label(info, text="Application Lourde Python · PostgreSQL · Triggers",
-                 bg=BG_HEADER, fg="#a7f3d0", font=("Segoe UI", 8)).pack(anchor="w")
+        # tk.Label(info, text="Application Lourde Python · PostgreSQL · Triggers",
+        #          bg=BG_HEADER, fg="#a7f3d0", font=("Segoe UI", 8)).pack(anchor="w")
 
         # Horloge
         self.lbl_clock = tk.Label(hdr, text="", bg=BG_HEADER,

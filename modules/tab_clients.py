@@ -1,129 +1,128 @@
 """
-tab_clients.py — Onglet de gestion des clients (interface graphique)
+tab_clients.py — Onglet Gestion des Clients
+  - Numéro de compte généré automatiquement
+  - Formulaire de modification clair dans une fenêtre dédiée
 """
-
 import tkinter as tk
-from tkinter import ttk, messagebox
+from tkinter import ttk
 
-from modules.styles import *
-from modules.widgets import (
-    GreenButton, DangerButton, SecondaryButton,
-    StatCard, LabelEntry, make_treeview, card_frame
-)
-import modules.client as client_mod
+from modules.styles  import *
+from modules.widgets import (Btn, BtnDanger, BtnGhost, BtnOrange,
+                              StatCard, make_tree, form_field,
+                              MsgSuccess, MsgError, MsgConfirm)
+import modules.client as cm
 
 
 class TabClients(tk.Frame):
-    """Onglet 'Clients' : liste, ajout, modification, suppression."""
 
-    def __init__(self, parent, app, **kwargs):
-        super().__init__(parent, bg=BG_ROOT, **kwargs)
+    def __init__(self, parent, app, **kw):
+        super().__init__(parent, bg=BG_ROOT, **kw)
         self.app = app
         self._build()
 
-    # ─────────────────────────────────────────────────────
-    #  CONSTRUCTION UI
-    # ─────────────────────────────────────────────────────
+    # ── Construction ─────────────────────────────────────
 
     def _build(self):
-        # ── En-tête ───────────────────────────────────────
+        # Titre
         hdr = tk.Frame(self, bg=BG_ROOT)
-        hdr.pack(fill="x", padx=PAD_X, pady=(PAD_Y, 0))
-
+        hdr.pack(fill="x", padx=PX, pady=(PY, 0))
         tk.Label(hdr, text="👤  Gestion des Clients",
-                 bg=BG_ROOT, fg=FG_PRIMARY, font=FONT_SUBTITLE).pack(side="left")
+                 bg=BG_ROOT, fg=FG_PRIMARY, font=F_SECTION).pack(side="left")
+        BtnGhost(hdr, text="🔄  Actualiser", command=self.refresh).pack(side="right")
 
-        SecondaryButton(hdr, text="🔄  Actualiser",
-                        command=self.refresh).pack(side="right")
+        # Stats
+        stats = tk.Frame(self, bg=BG_ROOT)
+        stats.pack(fill="x", padx=PX, pady=PY)
+        self.sc_n  = StatCard(stats, "Clients",          icon="👥", color=GREEN_DARK)
+        self.sc_t  = StatCard(stats, "Solde total (Ar)", icon="💰", color=TEAL)
+        self.sc_m  = StatCard(stats, "Solde moyen (Ar)", icon="📊", color=BLUE)
+        for sc in (self.sc_n, self.sc_t, self.sc_m):
+            sc.pack(side="left", expand=True, fill="both", padx=4, ipadx=4)
 
-        # ── Stats ─────────────────────────────────────────
-        stats_row = tk.Frame(self, bg=BG_ROOT)
-        stats_row.pack(fill="x", padx=PAD_X, pady=PAD_Y)
-
-        self.sc_total  = StatCard(stats_row, "Clients",   icon="👥", color=ACCENT_GREEN)
-        self.sc_solde  = StatCard(stats_row, "Solde total (Ar)", icon="💰", color=ACCENT_BLUE)
-        self.sc_moyen  = StatCard(stats_row, "Solde moyen",   icon="📊", color=ACCENT_ORANGE)
-
-        for sc in (self.sc_total, self.sc_solde, self.sc_moyen):
-            sc.pack(side="left", fill="y", expand=True,
-                    padx=4, pady=2, ipadx=4)
-
-        # ── Corps principal ───────────────────────────────
+        # Corps
         body = tk.Frame(self, bg=BG_ROOT)
-        body.pack(fill="both", expand=True, padx=PAD_X, pady=PAD_Y)
+        body.pack(fill="both", expand=True, padx=PX, pady=PY)
 
-        # Tableau gauche
-        tv_cols = ("n_compte", "nomclient", "solde")
-        tv_hdrs = {"n_compte": "N° Compte", "nomclient": "Nom Client", "solde": "Solde (Ar)"}
-        tv_wids = {"n_compte": 130, "nomclient": 300, "solde": 160}
+        # Tableau
+        cols = ("n_compte","nomclient","solde")
+        hdrs = {"n_compte":"N° Compte","nomclient":"Nom Client","solde":"Solde (Ar)"}
+        wids = {"n_compte":130,"nomclient":320,"solde":180}
+        self.tv, tvf = make_tree(body, cols, hdrs, wids, height=16)
+        self.tv.bind("<<TreeviewSelect>>", self._on_sel)
+        tvf.pack(side="left", fill="both", expand=True)
 
-        self.tv, tv_frame = make_treeview(body, tv_cols, tv_hdrs, tv_wids, height=16)
-        self.tv.bind("<<TreeviewSelect>>", self._on_select)
-        tv_frame.pack(side="left", fill="both", expand=True)
-
-        # Panneau droit — formulaire
-        pnl = tk.Frame(body, bg=BG_CARD, width=280)
-        pnl.pack(side="right", fill="y", padx=(10, 0))
+        # Panneau droit — Ajout nouveau client
+        pnl = tk.Frame(body, bg=BG_CARD, width=290)
+        pnl.pack(side="right", fill="y", padx=(12,0))
         pnl.pack_propagate(False)
 
-        tk.Label(pnl, text="➕  Nouveau Client",
-                 bg=BG_CARD, fg=FG_PRIMARY, font=FONT_SUBTITLE).pack(
-            pady=(18, 8), padx=14, anchor="w")
+        # En-tête panneau
+        ph = tk.Frame(pnl, bg=GREEN_DARK)
+        ph.pack(fill="x")
+        tk.Label(ph, text="➕  Nouveau Client",
+                 bg=GREEN_DARK, fg=FG_HEAD, font=F_LABEL_B).pack(
+            side="left", padx=14, pady=10)
 
-        # Séparateur
-        tk.Frame(pnl, bg=BORDER, height=1).pack(fill="x", padx=14, pady=(0, 10))
+        form = tk.Frame(pnl, bg=BG_CARD)
+        form.pack(fill="both", expand=True, padx=16, pady=10)
 
+        # Numéro auto (lecture seule)
         self.v_nc  = tk.StringVar()
         self.v_nom = tk.StringVar()
         self.v_sol = tk.StringVar(value="0")
 
-        for lbl, var in [("N° Compte :", self.v_nc),
-                         ("Nom Client :", self.v_nom),
-                         ("Solde initial (Ar) :", self.v_sol)]:
-            le = LabelEntry(pnl, lbl, var, width=26, bg=BG_CARD)
-            le.pack(fill="x", padx=14)
+        tk.Label(form, text="N° Compte :",
+                 bg=BG_CARD, fg=FG_SECONDARY, font=F_LABEL).pack(anchor="w")
+        nc_frame = tk.Frame(form, bg=BG_CARD)
+        nc_frame.pack(fill="x", pady=(2,10))
+        self.e_nc = ttk.Entry(nc_frame, textvariable=self.v_nc,
+                              width=16, state="readonly", font=F_INPUT)
+        self.e_nc.pack(side="left", ipady=5)
+        BtnGhost(nc_frame, text="↺", command=self._refresh_num,
+                 padx=6, pady=4).pack(side="left", padx=(6,0))
 
-        GreenButton(pnl, text="✔  Enregistrer",
-                    command=self._ajouter).pack(
-            pady=(4, 2), padx=14, fill="x")
+        form_field(form, "Nom complet :", self.v_nom, bg=BG_CARD)
+        form_field(form, "Solde initial (Ar) :", self.v_sol, bg=BG_CARD)
 
-        # ── Modification ──────────────────────────────────
-        tk.Frame(pnl, bg=BORDER, height=1).pack(fill="x", padx=14, pady=10)
+        Btn(form, text="✔  Enregistrer", command=self._ajouter).pack(
+            fill="x", pady=(4,2))
 
-        tk.Label(pnl, text="✏  Modifier Sélectionné",
-                 bg=BG_CARD, fg=FG_PRIMARY, font=FONT_LABEL_B).pack(
-            padx=14, anchor="w")
+        # Séparateur
+        tk.Frame(pnl, bg=BORDER, height=1).pack(fill="x", padx=16, pady=6)
 
-        self.v_nom_m = tk.StringVar()
-        self.v_sol_m = tk.StringVar()
+        # Boutons actions sur sélection
+        act = tk.Frame(pnl, bg=BG_CARD)
+        act.pack(fill="x", padx=16, pady=4)
+        tk.Label(act, text="Client sélectionné :", bg=BG_CARD,
+                 fg=FG_MUTED, font=F_STAT_L).pack(anchor="w", pady=(0,6))
+        BtnOrange(act, text="✏  Modifier", command=self._ouvrir_modif).pack(
+            fill="x", pady=2)
+        BtnDanger(act, text="🗑  Supprimer", command=self._supprimer).pack(
+            fill="x", pady=2)
 
-        LabelEntry(pnl, "Nouveau nom :", self.v_nom_m, width=26, bg=BG_CARD).pack(
-            fill="x", padx=14)
-        LabelEntry(pnl, "Nouveau solde (Ar) :", self.v_sol_m, width=26, bg=BG_CARD).pack(
-            fill="x", padx=14)
+        # Rafraîchir le numéro auto
+        self._refresh_num()
 
-        tk.Button(pnl, text="💾  Mettre à jour",
-                  bg=ACCENT_ORANGE, fg="white",
-                  font=FONT_BTN, relief="flat", cursor="hand2",
-                  command=self._modifier).pack(pady=(4, 2), padx=14, fill="x")
+    # ── Numéro automatique ────────────────────────────────
 
-        DangerButton(pnl, text="🗑  Supprimer",
-                     command=self._supprimer).pack(
-            pady=2, padx=14, fill="x")
+    def _refresh_num(self):
+        try:
+            self.v_nc.set(cm.get_next_numero())
+        except Exception:
+            self.v_nc.set("C001")
 
-    # ─────────────────────────────────────────────────────
-    #  ACTIONS
-    # ─────────────────────────────────────────────────────
+    # ── Sélection dans le tableau ─────────────────────────
 
-    def _on_select(self, _event=None):
-        """Rempli les champs de modification quand on sélectionne un client."""
+    def _on_sel(self, _=None):
+        pass  # Juste pour réagir si besoin
+
+    def _get_selected(self):
         sel = self.tv.selection()
-        if sel:
-            vals = self.tv.item(sel[0])["values"]
-            # vals = (n_compte, nomclient, solde_str)
-            self.v_nom_m.set(vals[1])
-            solde_str = str(vals[2]).replace(" ", "").replace(",", "")
-            self.v_sol_m.set(solde_str)
+        if not sel:
+            return None
+        return self.tv.item(sel[0])["values"]
+
+    # ── Actions ───────────────────────────────────────────
 
     def _ajouter(self):
         nc  = self.v_nc.get().strip()
@@ -131,74 +130,145 @@ class TabClients(tk.Frame):
         try:
             sol = float(self.v_sol.get().strip() or "0")
         except ValueError:
-            messagebox.showerror("Erreur", "Solde invalide (nombre attendu).", parent=self)
+            MsgError(self, "Le solde doit être un nombre valide.", "Erreur de saisie")
             return
-
         try:
-            client_mod.ajouter_client(nc, nom, sol)
-            self.app.set_status(f"✅ Client '{nom}' ajouté.")
-            self.v_nc.set(""); self.v_nom.set(""); self.v_sol.set("0")
+            cm.ajouter_client(nc, nom, sol)
+            MsgSuccess(self, f"Le client « {nom} » a été ajouté avec succès.\nN° Compte : {nc}",
+                       "Client ajouté")
+            self.app.set_status(f"✅ Client '{nom}' ({nc}) ajouté.")
+            self.v_nom.set(""); self.v_sol.set("0")
+            self._refresh_num()
             self.refresh()
         except (ValueError, RuntimeError) as e:
-            messagebox.showerror("Erreur", str(e), parent=self)
+            MsgError(self, str(e), "Erreur")
 
-    def _modifier(self):
-        sel = self.tv.selection()
-        if not sel:
-            messagebox.showwarning("Sélection", "Veuillez sélectionner un client.", parent=self)
+    def _ouvrir_modif(self):
+        vals = self._get_selected()
+        if not vals:
+            MsgWarning = __import__("modules.widgets", fromlist=["MsgWarning"]).MsgWarning
+            MsgWarning(self, "Veuillez d'abord sélectionner un client dans la liste.",
+                       "Aucune sélection")
             return
-        nc = self.tv.item(sel[0])["values"][0]
-        nom = self.v_nom_m.get().strip()
-        try:
-            sol = float(self.v_sol_m.get().strip())
-        except ValueError:
-            messagebox.showerror("Erreur", "Solde invalide.", parent=self)
-            return
-
-        try:
-            client_mod.modifier_client(nc, nom, sol)
-            self.app.set_status(f"✏ Client '{nc}' modifié.")
-            self.refresh()
-        except (ValueError, RuntimeError) as e:
-            messagebox.showerror("Erreur", str(e), parent=self)
+        FenetreModifClient(self, self.app, vals[0], vals[1],
+                           float(str(vals[2]).replace(",","")))
 
     def _supprimer(self):
-        sel = self.tv.selection()
-        if not sel:
-            messagebox.showwarning("Sélection", "Veuillez sélectionner un client.", parent=self)
+        vals = self._get_selected()
+        if not vals:
+            from modules.widgets import MsgWarning
+            MsgWarning(self, "Veuillez sélectionner un client.", "Aucune sélection")
             return
-        nc, nom = self.tv.item(sel[0])["values"][0], self.tv.item(sel[0])["values"][1]
-        if not messagebox.askyesno("Confirmer",
-                                   f"Supprimer le client '{nom}' ({nc}) ?", parent=self):
-            return
-        try:
-            client_mod.supprimer_client(nc)
-            self.app.set_status(f"🗑 Client '{nc}' supprimé.")
-            self.refresh()
-        except (ValueError, RuntimeError) as e:
-            messagebox.showerror("Erreur", str(e), parent=self)
+        nc, nom = vals[0], vals[1]
+        if MsgConfirm(self,
+                      f"Supprimer le client « {nom} » ({nc}) ?\n\n"
+                      f"⚠ Cette action est irréversible.",
+                      "Confirmer la suppression").ask():
+            try:
+                cm.supprimer_client(nc)
+                self.app.set_status(f"🗑 Client '{nc}' supprimé.")
+                self.refresh()
+            except (ValueError, RuntimeError) as e:
+                MsgError(self, str(e), "Erreur")
 
-    # ─────────────────────────────────────────────────────
-    #  RAFRAÎCHISSEMENT
-    # ─────────────────────────────────────────────────────
+    # ── Refresh ───────────────────────────────────────────
 
     def refresh(self):
-        """Recharge le tableau et les statistiques."""
-        for row in self.tv.get_children():
-            self.tv.delete(row)
-
-        clients = client_mod.get_all_clients()
-        for i, c in enumerate(clients):
-            tag = "alt" if i % 2 else ""
-            fg_tag = "neg" if c["solde"] < 0 else tag
+        for r in self.tv.get_children():
+            self.tv.delete(r)
+        for i, c in enumerate(cm.get_all_clients()):
+            tag = ("neg",) if c["solde"] < 0 else (("alt",) if i % 2 else ())
             self.tv.insert("", "end",
                            values=(c["n_compte"], c["nomclient"],
                                    f"{c['solde']:,.2f}"),
-                           tags=(fg_tag,))
+                           tags=tag)
+        s = cm.get_stats_clients()
+        self.sc_n.set(s["nb"])
+        self.sc_t.set(f"{s['total']:,.0f}")
+        self.sc_m.set(f"{s['moyen']:,.0f}")
 
-        self.tv.tag_configure("neg", foreground=ACCENT_RED)
 
-        stats = client_mod.get_stats_clients()
-        self.sc_total.update_value(str(stats["nb_clients"]))
-        self.sc_solde.update_value(f"{stats['solde_total']:,.0f}")
-        self.sc_moyen.update_value(f"{stats['solde_moyen']:,.0f}")
+# ════════════════════════════════════════════════════════
+#  FENÊTRE MODIFICATION CLIENT (claire et lisible)
+# ════════════════════════════════════════════════════════
+
+class FenetreModifClient(tk.Toplevel):
+    """Fenêtre dédiée à la modification d'un client — formulaire clair."""
+
+    def __init__(self, parent, app, n_compte, nomclient, solde):
+        super().__init__(parent)
+        self.app      = app
+        self.parent   = parent
+        self.n_compte = n_compte
+        self.title(f"Modifier le client — {n_compte}")
+        self.geometry("460x380")
+        self.configure(bg=BG_CARD)
+        self.resizable(False, False)
+        self.grab_set()
+        self.transient(parent)
+
+        # Centrer
+        self.update_idletasks()
+        px = parent.winfo_rootx() + (parent.winfo_width()  - 460) // 2
+        py = parent.winfo_rooty() + (parent.winfo_height() - 380) // 2
+        self.geometry(f"+{px}+{py}")
+
+        self._build(n_compte, nomclient, solde)
+
+    def _build(self, nc, nom, solde):
+        # En-tête coloré
+        hdr = tk.Frame(self, bg=ORANGE, height=52)
+        hdr.pack(fill="x")
+        hdr.pack_propagate(False)
+        tk.Label(hdr, text="✏  Modifier le Client",
+                 bg=ORANGE, fg="#fff", font=F_SECTION).pack(
+            side="left", padx=16, pady=12)
+        tk.Label(hdr, text=nc, bg=ORANGE, fg="#fff4e0",
+                 font=("Consolas", 11, "bold")).pack(side="right", padx=16)
+
+        body = tk.Frame(self, bg=BG_CARD)
+        body.pack(fill="both", expand=True, padx=28, pady=20)
+
+        # N° compte (non modifiable — affiché en info)
+        info = tk.Frame(body, bg=BG_SIDEBAR, pady=8)
+        info.pack(fill="x", pady=(0,16))
+        tk.Label(info, text=f"  N° Compte :  {nc}",
+                 bg=BG_SIDEBAR, fg=GREEN_DARK, font=F_LABEL_B).pack(side="left", padx=10)
+        tk.Label(info, text="(non modifiable)",
+                 bg=BG_SIDEBAR, fg=FG_MUTED, font=("Segoe UI", 8, "italic")).pack(
+            side="left")
+
+        # Champs modifiables
+        self.v_nom = tk.StringVar(value=nom)
+        self.v_sol = tk.StringVar(value=str(solde))
+
+        form_field(body, "Nom complet :", self.v_nom, bg=BG_CARD, width=36)
+        form_field(body, "Solde (Ar) :", self.v_sol, bg=BG_CARD, width=36)
+
+        # Boutons
+        tk.Frame(body, bg=BORDER, height=1).pack(fill="x", pady=(8,14))
+        row = tk.Frame(body, bg=BG_CARD)
+        row.pack(anchor="e")
+        BtnGhost(row, text="  Annuler  ", command=self.destroy).pack(
+            side="left", padx=(0,10))
+        BtnOrange(row, text="💾  Enregistrer les modifications",
+                  command=self._sauvegarder).pack(side="left")
+
+    def _sauvegarder(self):
+        nom = self.v_nom.get().strip()
+        try:
+            sol = float(self.v_sol.get().strip())
+        except ValueError:
+            MsgError(self, "Le solde doit être un nombre valide.", "Erreur de saisie")
+            return
+        try:
+            from modules.client import modifier_client
+            modifier_client(self.n_compte, nom, sol)
+            MsgSuccess(self,
+                       f"Le client « {nom} » ({self.n_compte}) a été mis à jour avec succès.",
+                       "Modification enregistrée")
+            self.app.set_status(f"✏ Client '{self.n_compte}' modifié.")
+            self.parent.refresh()
+            self.destroy()
+        except (ValueError, RuntimeError) as e:
+            MsgError(self, str(e), "Erreur")

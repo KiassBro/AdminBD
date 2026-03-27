@@ -1,75 +1,64 @@
 """
-styles.py — Constantes de style pour le thème Blanc / Vert
+styles.py — Design tokens — Thème Blanc & Vert Élégant
 """
 
-# ─────────────────────────────────────────────────────
-#  PALETTE COULEURS (thème Blanc & Vert)
-# ─────────────────────────────────────────────────────
+# ── Couleurs ─────────────────────────────────────────────
+BG_ROOT      = "#F4FAF6"
+BG_CARD      = "#FFFFFF"
+BG_HEADER    = "#0D6B3E"
+BG_SIDEBAR   = "#E8F5EE"
+BG_INPUT     = "#F8FDFB"
+BG_ROW_ALT  = "#F0FAF4"
 
-# Fonds
-BG_ROOT        = "#f0f7f4"   # fond général : blanc légèrement vert
-BG_CARD        = "#ffffff"   # blanc pur pour les cartes
-BG_HEADER      = "#1a7a4a"   # vert foncé professionnel
-BG_SIDEBAR     = "#e8f5ee"   # vert très clair (panneau latéral)
-BG_TABLE_HDR   = "#2e9e62"   # vert moyen pour entêtes de tableau
-BG_TABLE_ROW   = "#ffffff"   # lignes blanches
-BG_TABLE_ALT   = "#f0faf4"   # lignes alternées vert très pâle
-BG_INPUT       = "#f7fdf9"   # champ de saisie
+FG_HEAD      = "#FFFFFF"
+FG_PRIMARY   = "#0A2E1A"
+FG_SECONDARY = "#3D7A55"
+FG_MUTED     = "#8AAFA0"
+FG_TABLE_H   = "#FFFFFF"
+FG_TABLE     = "#0A2E1A"
 
-# Textes
-FG_HEADER      = "#ffffff"   # blanc sur fond vert
-FG_PRIMARY     = "#1a3d2b"   # vert très foncé (texte principal)
-FG_SECONDARY   = "#4a7c5e"   # vert moyen (labels)
-FG_MUTED       = "#7aaa8a"   # vert grisé (placeholder)
-FG_TABLE       = "#1a3d2b"   # texte dans les tables
-FG_TABLE_HDR   = "#ffffff"   # blanc sur entête de table
-
-# Accents & statuts
-ACCENT_GREEN   = "#1a7a4a"   # bouton principal
-ACCENT_HOVER   = "#145c38"   # hover bouton principal
-ACCENT_RED     = "#c0392b"   # danger / suppression
-ACCENT_ORANGE  = "#d68910"   # avertissement / modification
-ACCENT_BLUE    = "#1a6b9a"   # info / actions secondaires
-ACCENT_LIGHT   = "#27ae60"   # succès / ajout
+# Accents
+GREEN_DARK   = "#0D6B3E"
+GREEN_MED    = "#1A8F55"
+GREEN_LIGHT  = "#27AE60"
+GREEN_PALE   = "#A8E6C3"
+RED          = "#D63031"
+RED_DARK     = "#A3201F"
+ORANGE       = "#E67E22"
+ORANGE_DARK  = "#B8651A"
+BLUE         = "#2B7CB8"
+TEAL         = "#0E8A74"
 
 # Tags audit
-COLOR_INSERT   = "#d4edda"   # fond vert clair (insertion)
-COLOR_UPDATE   = "#fff3cd"   # fond orange clair (modification)
-COLOR_DELETE   = "#f8d7da"   # fond rouge clair (suppression)
-FG_INSERT      = "#155724"
-FG_UPDATE      = "#856404"
-FG_DELETE      = "#721c24"
+INS_BG  = "#D6F5E3"; INS_FG  = "#0A5C28"
+UPD_BG  = "#FEF0DC"; UPD_FG  = "#7A4500"
+DEL_BG  = "#FDDEDE"; DEL_FG  = "#7A1010"
 
-# Bordures
-BORDER         = "#b2d8c0"   # bordure verte claire
-BORDER_FOCUS   = "#1a7a4a"   # bordure active
+BORDER      = "#C8E6D5"
+BORDER_DARK = "#0D6B3E"
+SHADOW      = "#E0EDE6"
 
-# ─────────────────────────────────────────────────────
-#  POLICES
-# ─────────────────────────────────────────────────────
+# Table headers
+TBL_HDR_BG  = "#0D6B3E"
 
-FONT_TITLE    = ("Segoe UI", 16, "bold")
-FONT_SUBTITLE = ("Segoe UI", 12, "bold")
-FONT_LABEL    = ("Segoe UI", 10)
-FONT_LABEL_B  = ("Segoe UI", 10, "bold")
-FONT_INPUT    = ("Consolas", 10)
-FONT_TABLE    = ("Consolas", 9)
-FONT_TABLE_H  = ("Segoe UI", 9, "bold")
-FONT_BTN      = ("Segoe UI", 10, "bold")
-FONT_BTN_SM   = ("Segoe UI", 9)
-FONT_MONO     = ("Consolas", 11)
-FONT_STAT     = ("Segoe UI", 20, "bold")
-FONT_STAT_LBL = ("Segoe UI", 8)
-FONT_CLOCK    = ("Consolas", 10)
-FONT_STATUS   = ("Consolas", 9)
+# ── Polices ──────────────────────────────────────────────
+F_TITLE   = ("Georgia", 15, "bold")
+F_SECTION = ("Georgia", 12, "bold")
+F_LABEL   = ("Segoe UI", 10)
+F_LABEL_B = ("Segoe UI", 10, "bold")
+F_INPUT   = ("Consolas", 10)
+F_TABLE   = ("Consolas", 9)
+F_TABLE_H = ("Segoe UI", 9, "bold")
+F_BTN     = ("Segoe UI", 10, "bold")
+F_BTN_SM  = ("Segoe UI", 9)
+F_MONO    = ("Consolas", 11)
+F_STAT_V  = ("Georgia", 18, "bold")
+F_STAT_L  = ("Segoe UI", 8)
+F_CLOCK   = ("Consolas", 10)
+F_STATUS  = ("Consolas", 9)
 
-# ─────────────────────────────────────────────────────
-#  DIMENSIONS
-# ─────────────────────────────────────────────────────
-
-WINDOW_W  = 1150
-WINDOW_H  = 740
-PAD_X     = 12
-PAD_Y     = 8
-BTN_PAD_X = 14
-BTN_PAD_Y = 5
+# ── Dimensions ───────────────────────────────────────────
+WIN_W = 1160
+WIN_H = 760
+PX    = 14
+PY    = 8
